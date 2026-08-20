@@ -9,5 +9,10 @@ wheels/
 # Database files
 *.db
 
+# Media files
+*.mp4
+*.gif
+*.webp
+
 # Virtual environments
 .venv

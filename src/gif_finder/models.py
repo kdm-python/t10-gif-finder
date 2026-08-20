@@ -65,7 +65,6 @@ class Media(SQLModel, table=True):
     duration_ms: int | None = None
     has_animation: bool = False
 
-    category: str | None = None
     author: str
     stream_id: int | None = Field(
         default=None,
