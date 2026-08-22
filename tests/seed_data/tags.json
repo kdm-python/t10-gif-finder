@@ -5,5 +5,9 @@
   {"id": 4, "name": "gaming"},
   {"id": 5, "name": "sad"},
   {"id": 6, "name": "celebration"},
-  {"id": 7, "name": "loop"}
+  {"id": 7, "name": "loop"},
+  {"id": 8, "name": "muzz"},
+  {"id": 9, "name": "licka"},
+  {"id": 10, "name": "clap"},
+  {"id": 11, "name": "laugh"}
 ]

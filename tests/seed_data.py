@@ -11,18 +11,10 @@ from loguru import logger
 from sqlalchemy import text
 from sqlmodel import Session
 
-from gif_finder.database import create_db_and_tables, engine
-from gif_finder.models import Emote, EmoteMedia, Media, MediaTag, Stream, Tag
+from gif_finder.database.database import create_db_and_tables, engine
+from gif_finder.database.models import Emote, EmoteMedia, Media, MediaTag, Stream, Tag
 
-SEED_DATA_DIR = Path(__file__).parent.resolve().parents[1] / "seed_data"
-
-
-class DatabaseSetupError(RuntimeError):
-    """Raised when database table creation fails."""
-
-
-class SeedDataError(RuntimeError):
-    """Raised when a seed operation fails."""
+SEED_DATA_DIR = Path(__file__).resolve().parents[1] / "tests/seed_data"
 
 
 def _seed_paths() -> dict[str, Path]:
@@ -35,7 +27,7 @@ def _seed_paths() -> dict[str, Path]:
 
 
 def _load_json_records(filename: str) -> list[dict[str, Any]]:
-    file_path = _seed_paths()[filename.split(".")[0]]
+    file_path = _seed_paths()[Path(filename).stem]
     logger.info("Loading seed records from {path}", path=file_path)
 
     if not file_path.exists():

@@ -2,7 +2,14 @@ import os
 
 from sqlmodel import Session, SQLModel, create_engine
 
-from .models import Emote, EmoteMedia, Media, MediaTag, Stream, Tag  # noqa: F401
+from gif_finder.database.models import (  # noqa: F401
+    Emote,
+    EmoteMedia,
+    Media,
+    MediaTag,
+    Stream,
+    Tag,
+)
 
 DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///giffinder.db")
 
