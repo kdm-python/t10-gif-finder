@@ -4,14 +4,13 @@ from sqlmodel import Session, SQLModel, create_engine
 
 from gif_finder.database.models import (  # noqa: F401
     Emote,
-    EmoteMedia,
     Media,
     MediaTag,
     Stream,
     Tag,
 )
 
-DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///giffinder.db")
+DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./data/giffinder.db")
 
 engine = create_engine(
     DATABASE_URL,
