@@ -22,5 +22,11 @@
     "name": "clap",
     "media_id": 4,
     "media_ids": [4, 5]
+  },
+  {
+     "id": 5,
+     "name": "skill_issue",
+     "media_id": 5,
+     "media_ids": [5]
   }
 ]

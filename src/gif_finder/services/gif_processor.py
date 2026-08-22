@@ -1,21 +1,9 @@
-import math
-from pathlib import Path
 import sys
+from pathlib import Path
 
 from PIL import Image
 
-from gif_finder.models import MediaMetadata
-
-
-def _convert_file_size(size_bytes: int) -> str:
-    """Convert file size in bytes to a human-readable format."""
-    if size_bytes == 0:
-        return "0B"
-    size_name = ("B", "KB", "MB", "GB", "TB")
-    i = math.floor(math.log(size_bytes, 1024))
-    p = math.pow(1024, i)
-    s = round(size_bytes / p, 2)
-    return f"{s} {size_name[i]}"
+from gif_finder.database.models import MediaMetadata
 
 
 def _get_gif_timing(
@@ -68,6 +56,7 @@ def inspect_media(
                 image,
                 frame_count,
             )
+
         elif frame_rate is not None:
             frame_rate, duration_ms = _get_timing_from_frame_rate(
                 frame_count,
