@@ -56,11 +56,19 @@ def inspect_media(
                 image,
                 frame_count,
             )
-
-        elif frame_rate is not None:
+        elif format in ("WEBP", "AVIF"):
+            if frame_rate is None:
+                raise ValueError(
+                    f"Frame rate must be provided for {format} media inspection."
+                )
             frame_rate, duration_ms = _get_timing_from_frame_rate(
                 frame_count,
                 frame_rate,
+            )
+        else:
+            raise ValueError(
+                f"Unsupported media format: {format}. "
+                "Only GIF, WEBP and AVIF are supported."
             )
 
         return MediaMetadata(
