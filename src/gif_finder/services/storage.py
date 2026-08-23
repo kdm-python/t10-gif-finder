@@ -28,6 +28,10 @@ def store_media(
     """Copy a source file into the project media store and return its storage metadata."""
     source = Path(media_file).expanduser().resolve()
 
+    logger.info("SOURCE: {}", source)
+    logger.info("EXTENSION: {}", source.suffix)
+    logger.info("DESTINATION: {}", destination_root)
+
     if not source.exists():
         raise FileNotFoundError(f"Media file does not exist: {source}")
     if not source.is_file():

@@ -15,6 +15,7 @@ def prepare_media(
     stream_id: int | None = None,
     *,
     destination_root: Path | str | None = None,
+    frame_rate: float | None = None,
 ) -> Media:
     """Inspect, persist, and return a Media row suitable for database insertion."""
     source = Path(media_file).expanduser().resolve()
@@ -22,7 +23,12 @@ def prepare_media(
     if not source.exists():
         raise FileNotFoundError(f"Media file not found: {source}")
 
-    metadata = inspect_media(source)
+    metadata = inspect_media(source, frame_rate=frame_rate)
+
+    # Check suffix and use supplied frame rate if .webp file
+    if source.suffix.lower() == ".webp" and frame_rate is not None:
+        metadata.frame_rate = frame_rate
+
     stored = store_media(source, destination_root=destination_root)
 
     return Media(
@@ -41,3 +47,17 @@ def prepare_media(
         stream_id=stream_id,
         file_hash=stored.file_hash,
     )
+
+
+if __name__ == "__main__":
+    import sys
+
+    if len(sys.argv) < 2:
+        print("Usage: uv run src/gif_finder/services/media.py <path>")
+        raise SystemExit(1)
+
+    path = Path(sys.argv[1])
+
+    media = prepare_media(path, frame_rate=24)
+
+    print(media)
