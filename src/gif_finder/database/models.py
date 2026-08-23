@@ -67,6 +67,8 @@ class Media(SQLModel, table=True):
         foreign_key="stream.id",
     )
 
+    # description: str | None = None
+
     file_hash: str | None = None
 
     imported_at: datetime = Field(default_factory=datetime.now)
