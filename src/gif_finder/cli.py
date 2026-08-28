@@ -9,8 +9,11 @@ from pathlib import Path
 from loguru import logger
 
 from gif_finder.database.database import create_db_and_tables, get_session
-from gif_finder.services.media_import import import_media
-from gif_finder.services.media_processor import inspect_media
+from gif_finder.services.emote import EmoteService
+from gif_finder.services.media.media_import import import_media
+from gif_finder.services.media.media_processor import inspect_media
+from gif_finder.services.stream import StreamService
+from gif_finder.services.tag import TagService
 
 DEFAULT_FRAME_RATE = 24.0
 
@@ -96,6 +99,39 @@ def run_import(
         logger.success("Media imported successfully: {}", media)
 
 
+def _print_rows(title: str, rows: list[object], columns: list[str]) -> None:
+    """Pretty-print a list of rows for CLI inspection."""
+    print(title)
+    if not rows:
+        print("  (none)")
+        return
+
+    print("  " + " | ".join(columns))
+    for row in rows:
+        values = [str(getattr(row, column, "")) for column in columns]
+        print("  " + " | ".join(values))
+
+
+def run_show(kind: str) -> None:
+    """List all tags, streams or emotes in the database."""
+    create_db_and_tables()
+    with get_session() as session:
+        if kind == "tags":
+            rows = TagService(session).list()
+            _print_rows("Tags:", rows, ["id", "name"])
+            return
+        if kind == "streams":
+            rows = StreamService(session).list()
+            _print_rows("Streams:", rows, ["id", "stream_date", "description"])
+            return
+        if kind == "emotes":
+            rows = EmoteService(session).list()
+            _print_rows("Emotes:", rows, ["id", "name", "media_id"])
+            return
+
+        raise ValueError(f"Unsupported show target: {kind}")
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         description=(
@@ -131,6 +167,11 @@ def build_parser() -> argparse.ArgumentParser:
         help="Inspect a single media file and log the metadata without adding it to the database.",
     )
     parser.add_argument(
+        "--show",
+        choices=("tags", "streams", "emotes"),
+        help="List all tags, streams or emotes and print their IDs for manual testing.",
+    )
+    parser.add_argument(
         "--author",
         help="Optional author name to store along with the imported media.",
     )
@@ -155,12 +196,16 @@ def main(argv: list[str] | None = None) -> int:
     args = parser.parse_args(argv)
 
     try:
+        if args.show:
+            run_show(args.show)
+            return 0
+
         if args.inspect:
             run_inspect(args.inspect, frame_rate=args.frame_rate)
             return 0
 
         if not args.path:
-            parser.error("A media path is required unless --inspect is used.")
+            parser.error("A media path is required unless --inspect or --show is used.")
 
         combined_tags = _normalise_tag_values(args.tags + args.tag_args)
         if not combined_tags:

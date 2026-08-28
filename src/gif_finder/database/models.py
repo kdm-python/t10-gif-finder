@@ -39,7 +39,6 @@ class MediaTag(SQLModel, table=True):
 class Emote(SQLModel, table=True):
     id: int | None = Field(default=None, primary_key=True)
     name: str = Field(index=True, unique=True)
-    media_id: int = Field(foreign_key="media.id")
 
 
 class Media(SQLModel, table=True):
@@ -61,6 +60,7 @@ class Media(SQLModel, table=True):
     has_animation: bool = False
 
     author: str | None = None
+    emote_id: int | None = Field(default=None, foreign_key="emote.id")
 
     stream_id: int | None = Field(
         default=None,
