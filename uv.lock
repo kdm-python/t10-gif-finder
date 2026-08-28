@@ -75,6 +75,7 @@ version = "0.1.0"
 source = { editable = "." }
 dependencies = [
     { name = "fastapi" },
+    { name = "loguru" },
     { name = "pillow" },
     { name = "psycopg2-binary" },
     { name = "sqlmodel" },
@@ -83,13 +84,13 @@ dependencies = [
 
 [package.dev-dependencies]
 dev = [
-    { name = "loguru" },
     { name = "pytest" },
 ]
 
 [package.metadata]
 requires-dist = [
     { name = "fastapi", specifier = ">=0.141.1" },
+    { name = "loguru", specifier = ">=0.7.3" },
     { name = "pillow", specifier = ">=12.3.0" },
     { name = "psycopg2-binary", specifier = ">=2.9.12" },
     { name = "sqlmodel", specifier = ">=0.0.39" },
@@ -97,10 +98,7 @@ requires-dist = [
 ]
 
 [package.metadata.requires-dev]
-dev = [
-    { name = "loguru", specifier = ">=0.7.3" },
-    { name = "pytest", specifier = ">=9.1.1" },
-]
+dev = [{ name = "pytest", specifier = ">=9.1.1" }]
 
 [[package]]
 name = "greenlet"
