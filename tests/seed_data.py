@@ -12,7 +12,7 @@ from sqlalchemy import text
 from sqlmodel import Session
 
 from gif_finder.database.database import create_db_and_tables, engine
-from gif_finder.database.models import Emote, EmoteMedia, Media, MediaTag, Stream, Tag
+from gif_finder.database.models import Emote, Media, MediaTag, Stream, Tag
 
 SEED_DATA_DIR = Path(__file__).resolve().parents[1] / "tests/seed_data"
 
@@ -66,7 +66,7 @@ def _normalize_seed_value(record: dict[str, Any]) -> dict[str, Any]:
 def database_has_data() -> bool:
     """Return True if any application table contains at least one row."""
     with Session(engine) as session:
-        for table_name in ("stream", "tag", "media", "emote", "mediatag", "emotemedia"):
+        for table_name in ("stream", "tag", "media", "emote", "mediatag"):
             row_count = session.execute(
                 text(f"SELECT COUNT(*) FROM {table_name}")
             ).scalar_one()
@@ -98,18 +98,18 @@ def _seed_tags(records: list[dict[str, Any]]) -> None:
     logger.success("Completed tag seeding.")
 
 
-def _seed_media(records: list[dict[str, Any]]) -> None:
+def _seed_media(records: list[dict[str, Any]], media_emote_ids: dict[int, int]) -> None:
     logger.info("Seeding {count} media items.", count=len(records))
     media_rows: list[Media] = []
     media_tag_rows: list[MediaTag] = []
 
     for record in records:
         normalized = _normalize_seed_value(record)
-        media_rows.append(
-            Media(
-                **{key: value for key, value in normalized.items() if key != "tag_ids"}
-            )
-        )
+        media_kwargs = {
+            key: value for key, value in normalized.items() if key not in {"tag_ids"}
+        }
+        media_kwargs["emote_id"] = media_emote_ids.get(normalized["id"])
+        media_rows.append(Media(**media_kwargs))
 
         for tag_id in normalized.get("tag_ids", []):
             media_tag_rows.append(MediaTag(media_id=normalized["id"], tag_id=tag_id))
@@ -128,7 +128,6 @@ def _seed_media(records: list[dict[str, Any]]) -> None:
 def _seed_emotes(records: list[dict[str, Any]]) -> None:
     logger.info("Seeding {count} emotes.", count=len(records))
     emote_rows: list[Emote] = []
-    emote_media_rows: list[EmoteMedia] = []
 
     for record in records:
         normalized = _normalize_seed_value(record)
@@ -136,23 +135,14 @@ def _seed_emotes(records: list[dict[str, Any]]) -> None:
             Emote(
                 id=normalized["id"],
                 name=normalized["name"],
-                media_id=normalized["media_id"],
             )
         )
-
-        for media_id in normalized.get("media_ids", []):
-            emote_media_rows.append(
-                EmoteMedia(emote_id=normalized["id"], media_id=media_id)
-            )
 
     with Session(engine) as session:
         session.add_all(emote_rows)
         session.commit()
-        if emote_media_rows:
-            session.add_all(emote_media_rows)
-            session.commit()
 
-    logger.success("Completed emote and emote-media seeding.")
+    logger.success("Completed emote seeding.")
 
 
 def seed_data() -> bool:
@@ -179,11 +169,17 @@ def seed_data() -> bool:
         logger.exception("Unable to load seed files: {exc}", exc=exc)
         return False
 
+    media_emote_ids: dict[int, int] = {}
+    for record in emotes:
+        normalized = _normalize_seed_value(record)
+        for media_id in normalized.get("media_ids", []):
+            media_emote_ids[int(media_id)] = int(normalized["id"])
+
     try:
         _seed_streams(streams)
         _seed_tags(tags)
-        _seed_media(media)
         _seed_emotes(emotes)
+        _seed_media(media, media_emote_ids)
     except Exception as exc:
         logger.exception("Seed operation failed while writing data: {exc}", exc=exc)
         return False

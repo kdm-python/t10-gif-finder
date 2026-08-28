@@ -5,7 +5,7 @@ from __future__ import annotations
 from pathlib import Path
 
 from gif_finder.database.models import Media
-from gif_finder.services.media_processor import inspect_media
+from gif_finder.services.media.media_processor import inspect_media
 from gif_finder.services.storage import store_media
 
 FRAME_RATE_DEFAULT = 24.0

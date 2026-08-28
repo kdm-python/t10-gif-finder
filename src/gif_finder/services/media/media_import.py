@@ -2,21 +2,16 @@
 
 from pathlib import Path
 
-from sqlmodel import Session, select
+from sqlmodel import Session
 
 from gif_finder.database.models import Media, MediaTag, Tag
 from gif_finder.services.media import prepare_media
+from gif_finder.services.tag import TagService
 
 
 def find_or_create_tag(session: Session, tag_name: str) -> Tag:
-    """Find a Tag by name, or create it if it doesn't exist."""
-    tag = session.exec(select(Tag).where(Tag.name == tag_name)).first()
-    if tag is None:
-        tag = Tag(name=tag_name)
-        session.add(tag)
-        session.commit()
-        session.refresh(tag)
-    return tag
+    """Backward-compatible helper for tag lookup or creation."""
+    return TagService(session).find_or_create(tag_name)
 
 
 def import_media(
@@ -40,7 +35,7 @@ def import_media(
     session.add(media)
 
     # 3. Create/find tags
-    tag_objects = [find_or_create_tag(session, tag_name) for tag_name in tags]
+    tag_objects = [TagService(session).find_or_create(tag_name) for tag_name in tags]
 
     # 4. Create MediaTag relationships
     for tag in tag_objects:
