@@ -8,6 +8,8 @@ from gif_finder.database.models import Media
 from gif_finder.services.media_processor import inspect_media
 from gif_finder.services.storage import store_media
 
+FRAME_RATE_DEFAULT = 24.0
+
 
 def prepare_media(
     media_file: Path,
@@ -23,7 +25,9 @@ def prepare_media(
     if not source.exists():
         raise FileNotFoundError(f"Media file not found: {source}")
 
-    metadata = inspect_media(source, frame_rate=frame_rate)
+    metadata = inspect_media(
+        source, frame_rate=FRAME_RATE_DEFAULT if frame_rate is None else frame_rate
+    )
 
     # Check suffix and use supplied frame rate if .webp file
     if source.suffix.lower() == ".webp" and frame_rate is not None:

@@ -82,17 +82,3 @@ def inspect_media(
             duration_ms=duration_ms,
             has_animation=has_animation,
         )
-
-
-if __name__ == "__main__":
-    import sys
-
-    if len(sys.argv) < 2:
-        print("Usage: uv run src/gif_finder/media.py <path>")
-        raise SystemExit(1)
-
-    path = Path(sys.argv[1])
-
-    metadata = inspect_media(path, frame_rate=24)
-
-    print(metadata)
