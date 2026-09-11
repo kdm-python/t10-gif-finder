@@ -1,8 +1,8 @@
-import os
 from contextlib import contextmanager
 
 from sqlmodel import Session, SQLModel, create_engine
 
+from gif_finder.config import settings
 from gif_finder.database.models import (  # noqa: F401
     Emote,
     Media,
@@ -11,7 +11,7 @@ from gif_finder.database.models import (  # noqa: F401
     Tag,
 )
 
-DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./data/giffinder.db")
+DATABASE_URL = settings.test_database_url
 
 engine = create_engine(
     DATABASE_URL,

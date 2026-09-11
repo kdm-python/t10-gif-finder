@@ -23,7 +23,7 @@ class MediaMetadata:
 class Stream(SQLModel, table=True):
     id: int | None = Field(default=None, primary_key=True)
     stream_date: date
-    description: str
+    description: str | None = None
 
 
 class Tag(SQLModel, table=True):

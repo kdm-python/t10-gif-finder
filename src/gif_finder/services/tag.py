@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from sqlmodel import Session, select
 
-from gif_finder.database.models import Tag
+from gif_finder.database.models import MediaTag, Tag
 
 
 class TagService:
@@ -47,3 +47,20 @@ class TagService:
         if existing is not None:
             return existing
         return self.create(name)
+
+    def delete(self, tag_id: int) -> None:
+        """Delete a tag, raising if it is still attached to media."""
+        tag = self.session.get(Tag, tag_id)
+        if tag is None:
+            raise ValueError(f"Tag {tag_id} does not exist.")
+
+        in_use = self.session.exec(
+            select(MediaTag).where(MediaTag.tag_id == tag_id)
+        ).first()
+        if in_use is not None:
+            raise ValueError(
+                f"Tag {tag_id} is still attached to media and cannot be deleted."
+            )
+
+        self.session.delete(tag)
+        self.session.commit()

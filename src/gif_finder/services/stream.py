@@ -6,7 +6,7 @@ from datetime import date
 
 from sqlmodel import Session, select
 
-from gif_finder.database.models import Stream
+from gif_finder.database.models import Media, Stream
 
 
 class StreamService:
@@ -45,3 +45,20 @@ class StreamService:
         if existing is not None:
             return existing
         return self.create(stream_date=stream_date, description=description or "")
+
+    def delete(self, stream_id: int) -> None:
+        """Delete a stream, raising if it is still attached to media."""
+        stream = self.session.get(Stream, stream_id)
+        if stream is None:
+            raise ValueError(f"Stream {stream_id} does not exist.")
+
+        in_use = self.session.exec(
+            select(Media).where(Media.stream_id == stream_id)
+        ).first()
+        if in_use is not None:
+            raise ValueError(
+                f"Stream {stream_id} is still attached to media and cannot be deleted."
+            )
+
+        self.session.delete(stream)
+        self.session.commit()
