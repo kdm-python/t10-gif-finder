@@ -62,3 +62,20 @@ class EmoteService:
                     self.session.commit()
             return existing
         return self.create(name=name, media_id=media_id)
+
+    def delete(self, emote_id: int) -> None:
+        """Delete an emote, raising if it is still attached to media."""
+        emote = self.session.get(Emote, emote_id)
+        if emote is None:
+            raise ValueError(f"Emote {emote_id} does not exist.")
+
+        in_use = self.session.exec(
+            select(Media).where(Media.emote_id == emote_id)
+        ).first()
+        if in_use is not None:
+            raise ValueError(
+                f"Emote {emote_id} is still attached to media and cannot be deleted."
+            )
+
+        self.session.delete(emote)
+        self.session.commit()

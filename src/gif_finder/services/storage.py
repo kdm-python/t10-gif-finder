@@ -63,3 +63,13 @@ def store_media(
         original_filename=source.name,
         destination_root=str(root.resolve()),
     )
+
+
+def delete_stored_media(file_path: Path | str) -> None:
+    """Remove a previously stored media file, tolerating an already-missing file."""
+    path = Path(file_path)
+    try:
+        path.unlink()
+        logger.info("Deleted stored media file {}", path)
+    except FileNotFoundError:
+        logger.warning("Stored media file already missing: {}", path)
