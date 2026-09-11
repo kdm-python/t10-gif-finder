@@ -11,7 +11,7 @@ from gif_finder.database.models import (  # noqa: F401
     Tag,
 )
 
-DATABASE_URL = settings.test_database_url
+DATABASE_URL = settings.postgres_url
 
 engine = create_engine(
     DATABASE_URL,
