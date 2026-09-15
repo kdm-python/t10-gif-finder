@@ -8,7 +8,6 @@ GIF Finder is a Python project for importing, organizing, and searching animated
 - Organize media using tags, streams, and emotes
 - List, inspect, and delete records from the CLI
 - Persist data with SQLModel / SQLite or PostgreSQL configuration
-- Expose a simple API for integration with other tools
 
 ## Project structure
 
