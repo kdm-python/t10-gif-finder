@@ -201,3 +201,17 @@ def _has_animation(
     # An ffprobe video stream represents video media even when its exact frame
     # count is unavailable.
     return video_stream.get("codec_type") == "video"
+
+
+# (DEV) Delete later
+if __name__ == "__main__":
+    import sys
+
+    print("Arguments:", sys.argv)
+
+    print("File to inspect:", sys.argv[1] if len(sys.argv) > 1 else None)
+
+    print(
+        "Inspection result:",
+        inspect_media_file(sys.argv[1] if len(sys.argv) > 1 else None),
+    )

@@ -14,6 +14,12 @@ wheels/
 *.gif
 *.webp
 
+# But retain small, intentional test fixtures.
+!tests/fixtures/
+!tests/fixtures/**/*.gif
+!tests/fixtures/**/*.webp
+!tests/fixtures/**/*.mp4
+
 # Virtual environments
 .venv
 

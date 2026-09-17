@@ -11,7 +11,12 @@ from gif_finder.database.models import (  # noqa: F401
     Tag,
 )
 
-DATABASE_URL = settings.postgres_url
+# TODO: Test and production switching config
+if settings.giffinder_env == "development":
+    DATABASE_URL = settings.giffinder_test_database_url
+else:
+    DATABASE_URL = settings.giffinder_database_url
+
 
 engine = create_engine(
     DATABASE_URL,
