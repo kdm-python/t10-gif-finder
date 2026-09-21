@@ -16,9 +16,10 @@ FIXTURES = Path(__file__).parent.parent / "fixtures"
 
 def test_inspect_static_gif() -> None:
     """A static GIF still has valid visual metadata but is not animated."""
-    info = inspect_media_file(FIXTURES / "small_floor.gif")
+    source = FIXTURES / "gif" / "small_floor.gif"
+    info = inspect_media_file(source)
 
-    assert info.source_path == (FIXTURES / "small_floor.gif").resolve()
+    assert info.source_path == source.resolve()
     assert info.file_size_bytes == 68
 
     assert info.container_format == "gif"
@@ -34,7 +35,7 @@ def test_inspect_static_gif() -> None:
 
 
 def test_inspect_animated_gif() -> None:
-    info = inspect_media_file(FIXTURES / "animated_floor.gif")
+    info = inspect_media_file(FIXTURES / "gif" / "animated_floor.gif")
 
     assert info.container_format == "gif"
     assert info.mime_type == "image/gif"
@@ -46,6 +47,21 @@ def test_inspect_animated_gif() -> None:
     assert info.duration_ms == 2_850
     assert info.has_animation is True
     assert info.has_audio is False
+
+
+def test_inspect_mp4_extracts_video_and_audio_facts() -> None:
+    info = inspect_media_file(FIXTURES / "mp4" / "celebration.mp4")
+
+    assert info.media_kind == "video"
+    assert info.mime_type == "video/mp4"
+    assert info.video_codec == "h264"
+    assert info.audio_codec == "aac"
+    assert info.has_audio is True
+    assert (info.width, info.height) == (1920, 1080)
+    assert info.frame_count == 1272
+    assert info.duration_ms == 42_432
+    assert info.audio_channels == 2
+    assert info.probe_data["format"]["format_name"].startswith("mov,mp4")
 
 
 @pytest.mark.parametrize(
@@ -61,7 +77,7 @@ def test_inspect_animated_webp_uses_pillow_facts(
     expected_frames: int,
 ) -> None:
     """Pillow supplies image facts when ffprobe cannot obtain WebP dimensions."""
-    info = inspect_media_file(FIXTURES / filename)
+    info = inspect_media_file(FIXTURES / "webp" / filename)
 
     assert info.video_codec == "webp"
     assert info.mime_type == "image/webp"
@@ -74,7 +90,7 @@ def test_inspect_animated_webp_uses_pillow_facts(
 
 def test_inspect_missing_file_raises_clear_error() -> None:
     """A nonexistent source must fail before ffprobe is called."""
-    missing_file = FIXTURES / "does_not_exist.gif"
+    missing_file = FIXTURES / "gif" / "does_not_exist.gif"
 
     with pytest.raises(FileNotFoundError, match="Media file does not exist"):
         inspect_media_file(missing_file)

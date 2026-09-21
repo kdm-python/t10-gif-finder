@@ -4,25 +4,16 @@ from __future__ import annotations
 
 import hashlib
 import os
-import shutil
 import tempfile
-from dataclasses import dataclass
 from pathlib import Path
+
+from loguru import logger
+
+from gif_finder.services.media_files.contracts import StoredMedia
 
 
 class MediaStorageError(ValueError):
     """Raised for unsafe or invalid storage operations."""
-
-
-@dataclass(frozen=True)
-class StoredMedia:
-    """Reference to one object in the content-addressed media store."""
-
-    content_hash: str
-    storage_key: str
-    original_filename: str
-    file_size_bytes: int
-    was_created: bool
 
 
 class MediaStorage:
@@ -35,12 +26,16 @@ class MediaStorage:
         """Hash and copy a source file, reusing an existing identical object."""
         source_path = Path(source).expanduser().resolve()
         self._validate_source(source_path)
-
-        content_hash, file_size_bytes = self._hash_file(source_path)
+        logger.info("Staging media file for storage: {}", source_path)
+        staged_path, content_hash, file_size_bytes = self._stage_copy_and_hash(
+            source_path, self.root
+        )
         storage_key = self._storage_key_for_hash(content_hash)
         destination = self.resolve(storage_key)
 
         if destination.exists():
+            staged_path.unlink(missing_ok=True)
+            logger.info("Reused stored media object {}", storage_key)
             return StoredMedia(
                 content_hash=content_hash,
                 storage_key=storage_key,
@@ -50,7 +45,8 @@ class MediaStorage:
             )
 
         destination.parent.mkdir(parents=True, exist_ok=True)
-        self._copy_atomically(source_path, destination)
+        os.replace(staged_path, destination)
+        logger.info("Stored media object at {}", storage_key)
 
         return StoredMedia(
             content_hash=content_hash,
@@ -79,8 +75,9 @@ class MediaStorage:
 
         try:
             path.unlink()
+            logger.info("Deleted stored media object {}", storage_key)
         except FileNotFoundError:
-            pass
+            logger.warning("Stored media object was already absent: {}", storage_key)
 
     @staticmethod
     def _validate_source(source: Path) -> None:
@@ -91,40 +88,38 @@ class MediaStorage:
             raise MediaStorageError(f"Media path is not a file: {source}")
 
     @staticmethod
-    def _hash_file(source: Path) -> tuple[str, int]:
-        digest = hashlib.sha256()
-        file_size_bytes = 0
-
-        with source.open("rb") as media_file:
-            while chunk := media_file.read(1024 * 1024):
-                digest.update(chunk)
-                file_size_bytes += len(chunk)
-
-        return digest.hexdigest(), file_size_bytes
-
-    @staticmethod
     def _storage_key_for_hash(content_hash: str) -> str:
         return f"{content_hash[:2]}/{content_hash}"
 
     @staticmethod
-    def _copy_atomically(source: Path, destination: Path) -> None:
-        """Copy to a temporary sibling, then atomically put it in place."""
-        temporary_path: Path | None = None
+    def _stage_copy_and_hash(source: Path, root: Path) -> tuple[Path, str, int]:
+        """Copy and hash source once into a temporary file under the media root."""
+        staging_root = root / ".staging"
+        staging_root.mkdir(parents=True, exist_ok=True)
 
+        digest = hashlib.sha256()
+        file_size_bytes = 0
+
+        staged_path: Path | None = None
         try:
             with tempfile.NamedTemporaryFile(
                 mode="wb",
-                dir=destination.parent,
-                prefix=f".{destination.name}.",
+                dir=staging_root,
                 delete=False,
-            ) as temporary_file:
-                temporary_path = Path(temporary_file.name)
+            ) as staged_file:
+                staged_path = Path(staged_file.name)
 
                 with source.open("rb") as source_file:
-                    shutil.copyfileobj(source_file, temporary_file)
-
-            os.replace(temporary_path, destination)
+                    while chunk := source_file.read(1024 * 1024):
+                        digest.update(chunk)
+                        staged_file.write(chunk)
+                        file_size_bytes += len(chunk)
         except Exception:
-            if temporary_path is not None:
-                temporary_path.unlink(missing_ok=True)
+            if staged_path is not None:
+                staged_path.unlink(missing_ok=True)
             raise
+
+        if staged_path is None:  # pragma: no cover - defensive type narrowing
+            raise MediaStorageError("Unable to create a staged media file.")
+
+        return staged_path, digest.hexdigest(), file_size_bytes

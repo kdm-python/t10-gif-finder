@@ -7,7 +7,7 @@ FIXTURES = Path(__file__).parent.parent / "fixtures"
 
 
 def test_ffprobe_reads_a_gif_fixture():
-    payload = run_ffprobe(FIXTURES / "animated_floor.gif")
+    payload = run_ffprobe(FIXTURES / "gif" / "animated_floor.gif")
 
     assert payload["format"]["format_name"] == "gif"
     assert payload["streams"][0]["codec_type"] == "video"
@@ -16,7 +16,7 @@ def test_ffprobe_reads_a_gif_fixture():
 
 
 def test_pillow_reads_animated_webp_dimensions_and_frames():
-    facts = inspect_image(FIXTURES / "head_in_hands.webp")
+    facts = inspect_image(FIXTURES / "webp" / "head_in_hands.webp")
 
     assert facts.format == "WEBP"
     assert (facts.width, facts.height) == (640, 433)

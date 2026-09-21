@@ -1,7 +1,8 @@
 from datetime import UTC, date, datetime
 from typing import Any
 
-from sqlmodel import JSON, Column, Field, SQLModel, UniqueConstraint
+from sqlalchemy.dialects.postgresql import JSONB
+from sqlmodel import Column, Field, SQLModel, UniqueConstraint
 
 
 class Stream(SQLModel, table=True):
@@ -22,7 +23,7 @@ class MediaTag(SQLModel, table=True):
     __table_args__ = (UniqueConstraint("media_id", "tag_id", name="uq_media_tag"),)
 
     media_id: int = Field(foreign_key="media.id", primary_key=True)
-    tag_id: int = Field(foreign_key="tag.id", primary_key=True)
+    tag_id: int = Field(foreign_key="tag.id", primary_key=True, index=True)
 
 
 class Emote(SQLModel, table=True):
@@ -75,11 +76,11 @@ class Media(SQLModel, table=True):
     emote_id: int | None = Field(default=None, foreign_key="emote.id", index=True)
     stream_id: int | None = Field(default=None, foreign_key="stream.id", index=True)
 
-    # Optional diagnostic preservation of ffprobe's format/stream JSON.
     probe_data: dict[str, Any] | None = Field(
         default=None,
-        sa_column=Column(JSON, nullable=True),
+        sa_column=Column(JSONB, nullable=True),
     )
+
     probe_version: str | None = Field(default=None, max_length=64)
 
     imported_at: datetime = Field(

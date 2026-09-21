@@ -48,6 +48,7 @@ def inspect_media_file(path: Path | str) -> MediaFileInfo:
     return MediaFileInfo(
         source_path=source,
         file_size_bytes=source.stat().st_size,
+        media_kind="image" if image_facts is not None else "video",
         container_format=_optional_str(probe.get("format", {}).get("format_name")),
         mime_type=_mime_type(source, image_facts),
         width=_preferred_int(
@@ -58,21 +59,40 @@ def inspect_media_file(path: Path | str) -> MediaFileInfo:
             image_facts.height if image_facts else None,
             video_stream.get("height"),
         ),
+        duration_ms=_duration_ms(probe, video_stream, image_facts),
         frame_count=_preferred_int(
             image_facts.frame_count if image_facts else None,
             video_stream.get("nb_frames"),
         ),
         frame_rate=_frame_rate(video_stream),
-        duration_ms=_duration_ms(probe, video_stream, image_facts),
         has_animation=_has_animation(image_facts, video_stream),
+        has_alpha=image_facts.has_alpha if image_facts is not None else None,
+        rotation_degrees=_rotation_degrees(video_stream),
         video_codec=_optional_str(video_stream.get("codec_name")),
         pixel_format=_optional_str(video_stream.get("pix_fmt")),
+        video_bitrate=_optional_int(video_stream.get("bit_rate")),
         has_audio=audio_stream is not None,
         audio_codec=(
             _optional_str(audio_stream.get("codec_name"))
             if audio_stream is not None
             else None
         ),
+        audio_channels=(
+            _optional_int(audio_stream.get("channels"))
+            if audio_stream is not None
+            else None
+        ),
+        audio_sample_rate=(
+            _optional_int(audio_stream.get("sample_rate"))
+            if audio_stream is not None
+            else None
+        ),
+        audio_bitrate=(
+            _optional_int(audio_stream.get("bit_rate"))
+            if audio_stream is not None
+            else None
+        ),
+        probe_data=probe,
     )
 
 
@@ -203,15 +223,12 @@ def _has_animation(
     return video_stream.get("codec_type") == "video"
 
 
-# (DEV) Delete later
-if __name__ == "__main__":
-    import sys
+def _rotation_degrees(video_stream: dict[str, Any]) -> int | None:
+    """Extract an optional display rotation from ffprobe side data or tags."""
+    for side_data in video_stream.get("side_data_list", []):
+        rotation = _optional_int(side_data.get("rotation"))
+        if rotation is not None:
+            return rotation % 360
 
-    print("Arguments:", sys.argv)
-
-    print("File to inspect:", sys.argv[1] if len(sys.argv) > 1 else None)
-
-    print(
-        "Inspection result:",
-        inspect_media_file(sys.argv[1] if len(sys.argv) > 1 else None),
-    )
+    tags = video_stream.get("tags", {})
+    return _optional_int(tags.get("rotate"))
