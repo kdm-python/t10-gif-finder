@@ -2,17 +2,13 @@
 
 from __future__ import annotations
 
+import argparse
 import json
 import sys
 from datetime import date, datetime
 from pathlib import Path
 
 from loguru import logger
-
-from gif_finder.database.models import Media
-
-DEFAULT_FRAME_RATE = 24.0
-
 
 def configure_logging() -> None:
     """Configure a consistent log output format for CLI diagnostics."""
@@ -64,8 +60,25 @@ def print_rows(title: str, rows: list[object], columns: list[str]) -> None:
         print("  " + " | ".join(values))
 
 
-def media_to_json(media_rows: list[Media], tags_by_media: dict[int, list[str]]) -> str:
-    """Serialise media rows (with attached tag names) to a pretty JSON string."""
+def add_json_output_argument(parser: argparse.ArgumentParser) -> None:
+    """Add consistent machine-readable output support to a listing command."""
+    parser.add_argument(
+        "--json",
+        action="store_true",
+        help="Print records as JSON to stdout for piping or saving.",
+    )
+
+
+def rows_to_json(rows: list[object]) -> str:
+    """Serialise SQLModel/Pydantic rows as a JSON array."""
+    payload = [
+        row.model_dump() if hasattr(row, "model_dump") else row for row in rows
+    ]
+    return json.dumps(payload, indent=2, default=_json_default)
+
+
+def media_to_json(media_rows: list[object], tags_by_media: dict[int, list[str]]) -> str:
+    """Serialise media rows with attached tag names as pretty JSON."""
     payload = []
     for media in media_rows:
         record = media.model_dump()

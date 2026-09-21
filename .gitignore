@@ -14,8 +14,20 @@ wheels/
 *.gif
 *.webp
 
+# But retain small, intentional test fixtures.
+!tests/fixtures/
+!tests/fixtures/**/*.gif
+!tests/fixtures/**/*.webp
+!tests/fixtures/**/*.mp4
+
+# Local media directory
+tests/.runtime-media
+
 # Virtual environments
 .venv
 
 # Environment files
 .env
+
+# Note files
+*.txt
