@@ -20,6 +20,9 @@ wheels/
 !tests/fixtures/**/*.webp
 !tests/fixtures/**/*.mp4
 
+# Local media directory
+tests/.runtime-media
+
 # Virtual environments
 .venv
 

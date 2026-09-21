@@ -1,61 +1,121 @@
 # GIF Finder
 
-GIF Finder is a Python project for importing, organizing, and searching animated media files such as GIFs and related assets. It stores metadata in a database and exposes both a command-line interface and a small FastAPI application for managing media, tags, streams, and emotes.
-
-## Features
-
-- Import media files and capture technical metadata such as size, dimensions, animation details, and frame rate
-- Organize media using tags, streams, and emotes
-- List, inspect, and delete records from the CLI
-- Persist data with SQLModel / SQLite or PostgreSQL configuration
-
-## Project structure
-
-- `src/gif_finder/cli` — CLI commands for media, tags, streams, and emotes
-- `src/gif_finder/api` — API routes
-- `src/gif_finder/database` — database models and session setup
-- `src/gif_finder/services` — processing and storage logic
-- `tests` — smoke and service tests
+GIF Finder is a local, CLI-first catalogue for GIF, WebP, MP4, and other
+`ffprobe`-supported visual media. It inspects each file, stores its technical
+metadata and catalogue data in PostgreSQL, and copies the file into a
+content-addressed media store. A web application is not part of the project at
+present.
 
 ## Requirements
 
-- Python 3.13+
-- Dependencies managed via `pyproject.toml`
+- Python 3.13 or newer
+- [uv](https://docs.astral.sh/uv/)
+- PostgreSQL, with the databases created before running the application
+- FFmpeg, with `ffprobe` available on `PATH`
 
-## Setup
+Pillow is installed as a Python dependency and supplements `ffprobe` with image
+facts where useful.
 
-1. Create a virtual environment and install dependencies.
-2. Configure your environment variables in a `.env` file, including the values used by `Settings` such as:
-   - `test_database_url`
-   - `postgres_url`
-   - `sqlite_url`
-   - `frame_rate_default`
-   - `media_path`
+## Install and configure
 
-Example:
+Install the project dependencies:
 
 ```bash
 uv sync
+```
+
+Create the two PostgreSQL databases (adjust the PostgreSQL role as needed):
+
+```bash
+createdb giffinder
+createdb giffinder_test
+```
+
+Copy the example configuration and fill in the connection URLs and absolute
+media-store paths:
+
+```bash
+cp .env.example .env
+```
+
+```dotenv
+# development and test use the isolated test database and media root
+GIFFINDER_ENV=development
+
+GIFFINDER_DATABASE_URL=postgresql+psycopg2://USER:PASSWORD@localhost:5432/giffinder
+GIFFINDER_MEDIA_ROOT=/absolute/path/to/giffinder-media
+
+GIFFINDER_TEST_DATABASE_URL=postgresql+psycopg2://USER:PASSWORD@localhost:5432/giffinder_test
+GIFFINDER_TEST_MEDIA_ROOT=/absolute/path/to/gif-finder/tests/.runtime-media
+
+LOG_LEVEL=debug
+```
+
+All five settings are required, even when only one environment is active.
+`development` and `test` select `GIFFINDER_TEST_DATABASE_URL` and
+`GIFFINDER_TEST_MEDIA_ROOT`; `production` selects the non-test values. Keep the
+two media roots separate: imports copy files into the active root and deleting
+a media record removes its stored file.
+
+The application creates missing tables in the selected existing database. It
+does not create PostgreSQL databases; a missing or unreachable database is
+reported in the CLI log and the command exits unsuccessfully.
+
+## CLI usage
+
+Run commands through `uv` during development:
+
+```bash
 uv run gif-finder --help
 ```
 
-## Usage
-
-View the available commands:
-
-```bash
-gif-finder --help
-```
-
-Examples:
+Or, after activating the environment, use `gif-finder` directly. The current
+commands manage media, tags, streams, and emotes:
 
 ```bash
-gif-finder media add ./path/to/file.gif --tag funny --tag reaction
-gif-finder media view
-gif-finder tag add meme
-gif-finder stream view
+# Inspect without copying the file or writing to PostgreSQL.
+uv run gif-finder media inspect ./clip.gif
+
+# Import a file. At least one tag is required.
+uv run gif-finder media add ./clip.webp --tag funny --tag reaction \
+  --author "Example author" --title "Surprised reaction"
+
+# MP4 files are inspected with ffprobe too.
+uv run gif-finder media add ./clip.mp4 --tag highlight
+
+# List and filter the catalogue.
+uv run gif-finder media view
+uv run gif-finder media view --tag funny --format webp
+uv run gif-finder media view --kind video --json | jq .
+
+# Manage supporting records.
+uv run gif-finder tag add meme
+uv run gif-finder stream add --date 2026-09-21 --description "Evening stream"
+uv run gif-finder emote add pog
+uv run gif-finder tag view --json > tags.json
 ```
 
-## Notes
+`media view`, `tag view`, `stream view`, and `emote view` accept `--json` for
+machine-readable output. Logs are written to stderr, so JSON on stdout can be
+piped to `jq` or redirected safely.
 
-This project is focused on a local media catalog workflow. It is especially useful for collecting and labeling GIFs and related clips before later reuse in tools or applications.
+Use `--help` at any level for the complete option list:
+
+```bash
+uv run gif-finder media add --help
+uv run gif-finder media view --help
+```
+
+## Tests
+
+Tests use PostgreSQL rather than SQLite because the schema uses PostgreSQL
+features such as JSONB. They require a reachable `giffinder_test` database
+matching `GIFFINDER_TEST_DATABASE_URL` and will clear its application tables
+between tests. Never point this variable at the production database.
+
+```bash
+uv run pytest -q
+```
+
+Small GIF, WebP, and MP4 fixtures live under `tests/fixtures`. Runtime test
+media belongs in `tests/.runtime-media`, which is ignored by Git.

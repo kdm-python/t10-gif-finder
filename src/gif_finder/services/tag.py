@@ -23,15 +23,15 @@ class TagService:
         return self.session.get(Tag, tag_id)
 
     def get_by_name(self, name: str) -> Tag | None:
-        """Fetch a tag by a case-sensitive exact name value."""
-        cleaned_name = name.strip()
+        """Fetch a tag by its canonical case-insensitive name."""
+        cleaned_name = name.strip().casefold()
         if not cleaned_name:
             raise ValueError("Tag name cannot be blank.")
         return self.session.exec(select(Tag).where(Tag.name == cleaned_name)).first()
 
     def create(self, name: str) -> Tag:
         """Create a new tag row."""
-        cleaned_name = name.strip()
+        cleaned_name = name.strip().casefold()
         if not cleaned_name:
             raise ValueError("Tag name cannot be blank.")
 

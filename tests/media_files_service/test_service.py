@@ -6,7 +6,6 @@ from gif_finder.services.media_files.contracts import MediaImportRequest
 from gif_finder.services.media_files.service import MediaFilesService
 from gif_finder.services.media_files.storage import MediaStorage
 
-
 FIXTURE = Path(__file__).parent.parent / "fixtures" / "gif" / "animated_floor.gif"
 
 
@@ -37,7 +36,9 @@ def test_import_merges_duplicate_content_and_tags(db_session, tmp_path: Path) ->
     assert service.get_tags_for_media([second.id]) == {second.id: ["funny", "reaction"]}
 
 
-def test_delete_removes_catalogue_row_and_stored_file(db_session, tmp_path: Path) -> None:
+def test_delete_removes_catalogue_row_and_stored_file(
+    db_session, tmp_path: Path
+) -> None:
     storage = MediaStorage(tmp_path / "media")
     service = MediaFilesService(db_session, storage)
     media = service.import_media(

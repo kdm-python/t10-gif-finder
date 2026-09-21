@@ -6,7 +6,7 @@ import argparse
 
 from loguru import logger
 
-from gif_finder.cli.common import print_rows
+from gif_finder.cli.common import add_json_output_argument, print_rows, rows_to_json
 from gif_finder.database.database import create_db_and_tables, get_session
 from gif_finder.services.emote import EmoteService
 
@@ -26,6 +26,7 @@ def add_emote_subparser(subparsers: argparse._SubParsersAction) -> None:
     view_parser = emote_actions.add_parser(
         "view", aliases=["v"], help="List all emotes."
     )
+    add_json_output_argument(view_parser)
     view_parser.set_defaults(func=run_emote_view)
 
     delete_parser = emote_actions.add_parser(
@@ -48,6 +49,9 @@ def run_emote_view(args: argparse.Namespace) -> None:
     create_db_and_tables()
     with get_session() as session:
         rows = EmoteService(session).list()
+        if args.json:
+            print(rows_to_json(rows))
+            return
         print_rows("Emotes:", rows, ["id", "name"])
 
 

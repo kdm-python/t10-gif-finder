@@ -9,6 +9,7 @@ from dataclasses import asdict
 from loguru import logger
 
 from gif_finder.cli.common import (
+    add_json_output_argument,
     media_to_json,
     normalise_tag_values,
     resolve_media_path,
@@ -56,7 +57,7 @@ def add_media_subparser(subparsers: argparse._SubParsersAction) -> None:
     inspect_parser.set_defaults(func=run_media_inspect)
 
     view_parser = media_actions.add_parser(
-        "view", aliases=["v"], help="List media entries as JSON."
+        "view", aliases=["v"], help="List media entries."
     )
     view_parser.add_argument("-t", "--tag", help="Filter by tag name.")
     view_parser.add_argument("-a", "--author", help="Filter by author.")
@@ -64,6 +65,7 @@ def add_media_subparser(subparsers: argparse._SubParsersAction) -> None:
     view_parser.add_argument("-s", "--stream-id", type=int, help="Filter by stream ID.")
     view_parser.add_argument("--kind", help="Filter by media kind: image or video.")
     view_parser.add_argument("--format", dest="media_format", help="Filter by format.")
+    add_json_output_argument(view_parser)
     view_parser.set_defaults(func=run_media_view)
 
     delete_parser = media_actions.add_parser(
@@ -118,7 +120,7 @@ def run_media_inspect(args: argparse.Namespace) -> None:
 
 
 def run_media_view(args: argparse.Namespace) -> None:
-    """List media rows, optionally filtered, as JSON."""
+    """List media rows, optionally filtered."""
     create_db_and_tables()
     with get_session() as session:
         service = MediaFilesService.from_settings(session)
@@ -133,7 +135,23 @@ def run_media_view(args: argparse.Namespace) -> None:
         tags_by_media = service.get_tags_for_media(
             [row.id for row in rows if row.id is not None]
         )
-        print(media_to_json(rows, tags_by_media))
+        if args.json:
+            print(media_to_json(rows, tags_by_media))
+            return
+
+        print("Media:")
+        if not rows:
+            print("  (none)")
+            return
+        print("  id | format | dimensions | duration_ms | author | tags | filename")
+        for row in rows:
+            dimensions = f"{row.width}x{row.height}"
+            tags = ", ".join(tags_by_media.get(row.id, []))
+            print(
+                "  "
+                f"{row.id} | {row.format} | {dimensions} | {row.duration_ms} | "
+                f"{row.author or ''} | {tags} | {row.original_filename}"
+            )
 
 
 def run_media_delete(args: argparse.Namespace) -> None:
