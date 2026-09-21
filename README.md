@@ -1,4 +1,6 @@
-# GIF Finder
+# T10Nat GIF Finder
+
+The streamer T10Nat has an endless number of GIFs and clips that I want to organise into a single database. This application is intended to categorise and sort them all so they can be stored securely, queried and retrieved. The application is in its early stages, the next step will be to produce a (probably Next JS) frontend to host to allow others to upload to some sort of central database.
 
 GIF Finder is a local, CLI-first catalogue for GIF, WebP, MP4, and other
 `ffprobe`-supported visual media. It inspects each file, stores its technical
