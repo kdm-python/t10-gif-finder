@@ -20,6 +20,7 @@ class Settings(BaseSettings):
     giffinder_test_database_url: str
     giffinder_test_media_root: str
     log_level: str
+    giffinder_cors_origins: str = "http://localhost:5173,http://localhost:3000"
 
     class Config:
         env_file = ".env"
@@ -46,21 +47,17 @@ class Settings(BaseSettings):
             )
         return Path(configured_root).expanduser()
 
+    @property
+    def cors_origins(self) -> list[str]:
+        """Return explicitly configured browser origins for the API."""
+        return [
+            origin.strip()
+            for origin in self.giffinder_cors_origins.split(",")
+            if origin.strip()
+        ]
+
 
 settings = Settings()
-
-
-# class Settings(BaseSettings):
-#     """Settings for the application."""
-
-#     test_database_url: str
-#     postgres_url: str
-#     frame_rate_default: float
-#     media_path: str
-
-#     class Config:
-#         env_file = ".env"
-#         env_file_encoding = "utf-8"
 
 
 # settings = Settings()

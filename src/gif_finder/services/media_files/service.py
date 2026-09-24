@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import replace
+from datetime import UTC, datetime
 from pathlib import Path
 
 from loguru import logger
@@ -12,6 +13,7 @@ from gif_finder.database.models import Media
 from gif_finder.services.media_files.contracts import (
     MediaFileInfo,
     MediaImportRequest,
+    MediaUpdateRequest,
     StoredMedia,
 )
 from gif_finder.services.media_files.inspector import inspect_media_file
@@ -51,7 +53,10 @@ class MediaFilesService:
         stored: StoredMedia | None = None
         try:
             info = self.inspect(request.source_path)
-            stored = self.storage.store(request.source_path)
+            stored = self.storage.store(
+                request.source_path,
+                original_filename=request.original_filename,
+            )
 
             self._validate_stream(request.stream_id)
             emote_id = self._resolve_emote_id(request.emote_name)
@@ -108,6 +113,52 @@ class MediaFilesService:
     def get_tags_for_media(self, media_ids: list[int]) -> dict[int, list[str]]:
         """Return tags for a group of catalogue rows."""
         return self.repository.get_tags_for_media(media_ids)
+
+    def get_media(self, media_id: int) -> Media | None:
+        """Return one media record by ID."""
+        return self.repository.get_by_id(media_id)
+
+    def update_media(self, media_id: int, request: MediaUpdateRequest) -> Media:
+        """Update mutable catalogue fields while preserving inspected facts."""
+        media = self.repository.get_by_id(media_id)
+        if media is None:
+            raise MediaFilesServiceError(f"Media {media_id} does not exist.")
+
+        if "stream_id" in request.provided_fields:
+            self._validate_stream(request.stream_id)
+            media.stream_id = request.stream_id
+        if "emote_id" in request.provided_fields:
+            if (
+                request.emote_id is not None
+                and self.repository.get_emote(request.emote_id) is None
+            ):
+                raise MediaFilesServiceError(
+                    f"Emote {request.emote_id} does not exist."
+                )
+            media.emote_id = request.emote_id
+        if "tags" in request.provided_fields:
+            if not request.tags:
+                raise MediaFilesServiceError("At least one tag is required for media.")
+            self.repository.replace_tags(media, request.tags)
+
+        for field_name in {"title", "description", "author", "source_url"} & request.provided_fields:
+            setattr(media, field_name, self._optional_text(getattr(request, field_name)))
+
+        media.updated_at = datetime.now(UTC)
+        self.session.commit()
+        self.session.refresh(media)
+        logger.info("Updated media row {} fields={}", media.id, sorted(request.provided_fields))
+        return media
+
+    def resolve_media_file(self, media_id: int) -> tuple[Media, Path]:
+        """Resolve a stored media object for safe HTTP delivery."""
+        media = self.repository.get_by_id(media_id)
+        if media is None:
+            raise MediaFilesServiceError(f"Media {media_id} does not exist.")
+        path = self.storage.resolve(media.storage_key)
+        if not path.is_file():
+            raise MediaFilesServiceError(f"Stored file for media {media_id} is missing.")
+        return media, path
 
     def delete_media(self, media_id: int) -> None:
         """Delete a media row and then remove its unique stored object."""

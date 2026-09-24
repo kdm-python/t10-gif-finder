@@ -46,6 +46,30 @@ class StreamService:
             return existing
         return self.create(stream_date=stream_date, description=description or "")
 
+    def update(
+        self,
+        stream_id: int,
+        *,
+        provided_fields: set[str],
+        stream_date: date | None = None,
+        description: str | None = None,
+    ) -> Stream:
+        """Partially update a stream record."""
+        stream = self.get_by_id(stream_id)
+        if stream is None:
+            raise ValueError(f"Stream {stream_id} does not exist.")
+        if "stream_date" in provided_fields:
+            if stream_date is None:
+                raise ValueError("stream_date cannot be null.")
+            stream.stream_date = stream_date
+        if "description" in provided_fields:
+            stream.description = description.strip() if description else None
+
+        self.session.add(stream)
+        self.session.commit()
+        self.session.refresh(stream)
+        return stream
+
     def delete(self, stream_id: int) -> None:
         """Delete a stream, raising if it is still attached to media."""
         stream = self.session.get(Stream, stream_id)

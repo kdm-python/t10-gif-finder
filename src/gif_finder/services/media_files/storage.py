@@ -22,10 +22,13 @@ class MediaStorage:
     def __init__(self, root: Path | str) -> None:
         self.root = Path(root).expanduser().resolve()
 
-    def store(self, source: Path | str) -> StoredMedia:
+    def store(
+        self, source: Path | str, *, original_filename: str | None = None
+    ) -> StoredMedia:
         """Hash and copy a source file, reusing an existing identical object."""
         source_path = Path(source).expanduser().resolve()
         self._validate_source(source_path)
+        display_filename = self._display_filename(original_filename, source_path.name)
         logger.info("Staging media file for storage: {}", source_path)
         staged_path, content_hash, file_size_bytes = self._stage_copy_and_hash(
             source_path, self.root
@@ -39,7 +42,7 @@ class MediaStorage:
             return StoredMedia(
                 content_hash=content_hash,
                 storage_key=storage_key,
-                original_filename=source_path.name,
+                original_filename=display_filename,
                 file_size_bytes=file_size_bytes,
                 was_created=False,
             )
@@ -51,7 +54,7 @@ class MediaStorage:
         return StoredMedia(
             content_hash=content_hash,
             storage_key=storage_key,
-            original_filename=source_path.name,
+            original_filename=display_filename,
             file_size_bytes=file_size_bytes,
             was_created=True,
         )
@@ -86,6 +89,17 @@ class MediaStorage:
 
         if not source.is_file():
             raise MediaStorageError(f"Media path is not a file: {source}")
+
+    @staticmethod
+    def _display_filename(value: str | None, fallback: str) -> str:
+        """Keep only a safe filename for display; never retain a client path."""
+        if value is None:
+            return fallback
+
+        filename = Path(value.replace("\\", "/")).name.strip()
+        if not filename or filename in {".", ".."} or "\x00" in filename:
+            return fallback
+        return filename
 
     @staticmethod
     def _storage_key_for_hash(content_hash: str) -> str:

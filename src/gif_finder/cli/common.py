@@ -10,6 +10,7 @@ from pathlib import Path
 
 from loguru import logger
 
+
 def configure_logging() -> None:
     """Configure a consistent log output format for CLI diagnostics."""
     logger.remove()
@@ -71,9 +72,7 @@ def add_json_output_argument(parser: argparse.ArgumentParser) -> None:
 
 def rows_to_json(rows: list[object]) -> str:
     """Serialise SQLModel/Pydantic rows as a JSON array."""
-    payload = [
-        row.model_dump() if hasattr(row, "model_dump") else row for row in rows
-    ]
+    payload = [row.model_dump() if hasattr(row, "model_dump") else row for row in rows]
     return json.dumps(payload, indent=2, default=_json_default)
 
 

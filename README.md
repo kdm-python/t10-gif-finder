@@ -2,11 +2,11 @@
 
 The streamer T10Nat has an endless number of GIFs and clips that I want to organise into a single database. This application is intended to categorise and sort them all so they can be stored securely, queried and retrieved. The application is in its early stages, the next step will be to produce a (probably Next JS) frontend to host to allow others to upload to some sort of central database.
 
-GIF Finder is a local, CLI-first catalogue for GIF, WebP, MP4, and other
+GIF Finder is a local catalogue for GIF, WebP, MP4, and other
 `ffprobe`-supported visual media. It inspects each file, stores its technical
 metadata and catalogue data in PostgreSQL, and copies the file into a
-content-addressed media store. A web application is not part of the project at
-present.
+content-addressed media store. It provides a management CLI and a small FastAPI
+backend for a future browser frontend.
 
 ## Requirements
 
@@ -51,6 +51,9 @@ GIFFINDER_TEST_DATABASE_URL=postgresql+psycopg2://USER:PASSWORD@localhost:5432/g
 GIFFINDER_TEST_MEDIA_ROOT=/absolute/path/to/gif-finder/tests/.runtime-media
 
 LOG_LEVEL=debug
+
+# Comma-separated browser origins allowed to call the API.
+GIFFINDER_CORS_ORIGINS=http://localhost:5173,http://localhost:3000
 ```
 
 All five settings are required, even when only one environment is active.
@@ -107,6 +110,37 @@ Use `--help` at any level for the complete option list:
 uv run gif-finder media add --help
 uv run gif-finder media view --help
 ```
+
+## HTTP API
+
+Start the local API server:
+
+```bash
+uv run uvicorn gif_finder.api.app:app --reload
+```
+
+The interactive API documentation is then available at
+`http://127.0.0.1:8000/docs`. The API has CRUD routes for `/tags`, `/emotes`,
+`/streams`, and `/media`; media imports use `multipart/form-data` with a `file`
+field and one or more repeated `tags` fields. `PATCH /streams/{id}` and
+`PATCH /media/{id}` update user-managed attributes. Stored file content can be
+read through `GET /media/{id}/file` without exposing filesystem paths.
+
+For example, with the server running:
+
+```bash
+curl -X POST http://127.0.0.1:8000/tags \
+  -H 'Content-Type: application/json' \
+  -d '{"name":"funny"}'
+
+curl -X POST http://127.0.0.1:8000/media \
+  -F file=@./clip.gif \
+  -F tags=funny \
+  -F tags=reaction
+```
+
+The API is intended for trusted local development at this stage. Add
+authentication before making it reachable outside a trusted network.
 
 ## Tests
 

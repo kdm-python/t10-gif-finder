@@ -46,6 +46,7 @@ class MediaImportRequest:
 
     source_path: Path
     tags: list[str]
+    original_filename: str | None = None
 
     author: str | None = None
     emote_name: str | None = None
@@ -53,6 +54,20 @@ class MediaImportRequest:
     title: str | None = None
     description: str | None = None
     source_url: str | None = None
+
+
+@dataclass(frozen=True)
+class MediaUpdateRequest:
+    """A partial update of user-maintained media catalogue fields."""
+
+    provided_fields: frozenset[str]
+    title: str | None = None
+    description: str | None = None
+    author: str | None = None
+    source_url: str | None = None
+    stream_id: int | None = None
+    emote_id: int | None = None
+    tags: list[str] | None = None
 
 
 @dataclass(frozen=True)

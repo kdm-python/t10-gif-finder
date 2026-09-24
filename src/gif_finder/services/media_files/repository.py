@@ -94,6 +94,10 @@ class MediaRepository:
         """Return a stream record by primary key."""
         return self.session.get(Stream, stream_id)
 
+    def get_emote(self, emote_id: int) -> Emote | None:
+        """Return an emote record by primary key."""
+        return self.session.get(Emote, emote_id)
+
     def find_or_create_tag(self, name: str) -> Tag:
         """Find or create one canonical, case-insensitive tag without committing."""
         cleaned_name = self.normalise_tag_name(name)
@@ -131,6 +135,22 @@ class MediaRepository:
             ).first()
             if link is None:
                 self.session.add(MediaTag(media_id=media.id, tag_id=tag.id))
+
+    def replace_tags(self, media: Media, tag_names: Iterable[str]) -> None:
+        """Replace a media item's complete tag set without committing."""
+        if media.id is None:
+            raise MediaRepositoryError("Media must have an ID before replacing tags.")
+
+        names = list(tag_names)
+        if not names:
+            raise MediaRepositoryError("At least one tag is required.")
+
+        for link in self.session.exec(
+            select(MediaTag).where(MediaTag.media_id == media.id)
+        ).all():
+            self.session.delete(link)
+        self.session.flush()
+        self.attach_tags(media, names)
 
     def find_or_create_emote(self, name: str) -> Emote:
         """Find or create an optional emote without committing."""
