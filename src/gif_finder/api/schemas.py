@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from datetime import date, datetime
+
 from pydantic import BaseModel, ConfigDict, Field
 
 from gif_finder.database.models import Media

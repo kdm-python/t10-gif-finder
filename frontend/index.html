@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>T10Nat GIF Finder</title>
+    <link rel="stylesheet" href="css/styles.css" />
+  </head>
+  <body>
+    <div id="top-row">
+      <img
+        src="./assets/images/grey_rat.avif"
+        alt="Rat picture"
+        height="150"
+        width="150"
+      />
+      <h1>T10Nat GIF Finder</h1>
+      <img
+        src="./assets/images/yt_smile.jpg"
+        alt="Nat picture"
+        height="150"
+        width="150"
+      />
+    </div>
+    <div id="button-row"></div>
+    <div>
+      <p>Find and explore GIFs from T10Nat streams.</p>
+    </div>
+
+    <main>
+      <section id="media-section">
+        <h3>Media</h3>
+        <div id="media-display"></div>
+      </section>
+
+      <section id="upload-section">
+        <h3>Upload</h3>
+        <p>At least one tag is required, all others optional</p>
+        <form id="upload-form">
+          <div>
+            <label for="media-file">File</label>
+            <input id="media-file" type="file" required />
+          </div>
+
+          <div>
+            <label for="media-tags">Tags</label>
+            <input
+              id="media-tags"
+              type="text"
+              placeholder="dance, funny, reaction"
+              required
+            />
+          </div>
+
+          <div>
+            <label for="stream-id">Stream ID</label>
+            <input id="stream-id" type="number" />
+          </div>
+
+          <div>
+            <label for="author">Author</label>
+            <input id="author" type="text" />
+          </div>
+
+          <div>
+            <label for="title">Title</label>
+            <input id="title" type="text" />
+          </div>
+
+          <div>
+            <label for="description">Description</label>
+            <input id="description" type="text" />
+          </div>
+
+          <div>
+            <label for="source-url">Source URL</label>
+            <input id="source-url" type="url" />
+          </div>
+
+          <button type="submit">Upload</button>
+        </form>
+
+        <p id="upload-status"></p>
+      </section>
+
+      <section id="tag-section">
+        <h3>Tags</h3>
+        <div id="tags-display"></div>
+      </section>
+
+      <section id="stream-section">
+        <h3>Streams</h3>
+        <div id="streams-display"></div>
+      </section>
+    </main>
+
+    <script type="module" src="js/app.js"></script>
+  </body>
+</html>
