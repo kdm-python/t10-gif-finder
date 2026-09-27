@@ -2,10 +2,12 @@
 
 from __future__ import annotations
 
+from io import BytesIO
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile, status
 from fastapi.responses import FileResponse, Response
+from PIL import Image, UnidentifiedImageError
 from sqlmodel import Session
 
 from gif_finder.api.dependencies import get_db_session
@@ -59,6 +61,32 @@ def get_media_file(media_id: int, session: SessionDep) -> FileResponse:
         filename=media.original_filename,
         content_disposition_type="inline",
     )
+
+
+@router.get("/{media_id}/preview", response_class=Response)
+def get_media_preview(media_id: int, session: SessionDep) -> Response:
+    """Return the first image frame as a stable PNG thumbnail for the browser."""
+    service = MediaFilesService.from_settings(session)
+    try:
+        media, path = service.resolve_media_file(media_id)
+    except (MediaFilesServiceError, MediaStorageError) as exc:
+        logger.warning("Could not deliver preview for media {}: {}", media_id, exc)
+        raise HTTPException(status_code=404, detail="Media file not found.") from exc
+
+    if media.media_kind != "image":
+        raise HTTPException(status_code=415, detail="Previews are only available for images.")
+
+    try:
+        with Image.open(path) as image:
+            image.seek(0)
+            preview = image.convert("RGBA")
+            output = BytesIO()
+            preview.save(output, format="PNG")
+    except (OSError, UnidentifiedImageError) as exc:
+        logger.warning("Could not generate preview for media {}: {}", media_id, exc)
+        raise HTTPException(status_code=422, detail="Could not generate media preview.") from exc
+
+    return Response(content=output.getvalue(), media_type="image/png")
 
 
 @router.get("/{media_id}", response_model=MediaRead)

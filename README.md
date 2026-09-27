@@ -126,6 +126,11 @@ field and one or more repeated `tags` fields. `PATCH /streams/{id}` and
 `PATCH /media/{id}` update user-managed attributes. Stored file content can be
 read through `GET /media/{id}/file` without exposing filesystem paths.
 
+The bundled vanilla HTML, CSS, and JavaScript client is served from
+`http://127.0.0.1:8000/app/`. It includes an upload screen and a browsable GIF/
+WebP catalogue; browse-card previews are first-frame PNGs from
+`GET /media/{id}/preview`.
+
 For example, with the server running:
 
 ```bash

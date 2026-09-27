@@ -3,9 +3,11 @@
 from __future__ import annotations
 
 from contextlib import asynccontextmanager
+from pathlib import Path
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 
 from gif_finder.api.errors import register_exception_handlers
 from gif_finder.api.routers import emotes, media, streams, tags
@@ -44,6 +46,11 @@ app.include_router(emotes.router)
 app.include_router(streams.router)
 app.include_router(media.router)
 register_exception_handlers(app)
+
+# Keep the small, dependency-free client alongside the API for local use.
+# ``html=True`` makes /app/ serve frontend/index.html.
+frontend_directory = Path(__file__).resolve().parents[3] / "frontend"
+app.mount("/app", StaticFiles(directory=frontend_directory, html=True), name="frontend")
 
 
 @app.get("/health", tags=["health"])

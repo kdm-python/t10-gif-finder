@@ -69,5 +69,17 @@ def test_media_upload_update_and_delivery(db_session) -> None:
         assert delivered.status_code == 200
         assert delivered.content == FIXTURE.read_bytes()
 
+        preview = client.get(f"/media/{media['id']}/preview")
+        assert preview.status_code == 200
+        assert preview.headers["content-type"] == "image/png"
+        assert preview.content.startswith(b"\x89PNG")
+
         assert client.delete(f"/media/{media['id']}").status_code == 204
         assert client.get(f"/media/{media['id']}").status_code == 404
+
+
+def test_frontend_is_served_from_app_path() -> None:
+    with TestClient(app) as client:
+        response = client.get("/app/")
+        assert response.status_code == 200
+        assert "T10Nat GIF Finder" in response.text

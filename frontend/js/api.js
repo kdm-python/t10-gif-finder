@@ -1,48 +1,28 @@
-const BACKEND_URL = "http://127.0.0.1:8001";
+// Static files are served by FastAPI at /app, so API requests use same-origin paths.
+const API_BASE_URL =
+  window.location.protocol === "file:" ? "http://127.0.0.1:8001" : "";
 
-export async function getMedia() {
-  const response = await fetch(`${BACKEND_URL}/media`);
+async function request(path, options) {
+  console.log(`[gif-finder] ${options?.method || "GET"} ${path}`);
+  const response = await fetch(`${API_BASE_URL}${path}`, options);
+  console.log(`Fetching media from ${API_BASE_URL}${path}`);
+  console.log(`[gif-finder] Response status: ${response.status}`);
+  if (response.ok) return response.json();
+  let detail = `Request failed (${response.status})`;
 
-  if (!response.ok) {
-    throw new Error("Failed to load media");
+  try {
+    detail = (await response.json()).detail || detail;
+  } catch {
+    /* A non-JSON error is still useful. */
   }
 
-  const media = await response.json();
-
-  // Sort by date key
-
-  return media;
+  throw new Error(detail);
 }
 
-export async function sendMedia(mediaData) {
-  const response = await fetch(`${BACKEND_URL}/media`, {
-    method: "POST",
-    body: mediaData,
-  });
-
-  if (!response.ok) {
-    throw new Error("Failed to upload media");
-  }
-
-  return response.json();
-}
-
-export async function getTags() {
-  const response = await fetch(`${BACKEND_URL}/tags`);
-
-  if (!response.ok) {
-    throw new Error("Failed to load tags");
-  }
-
-  return response.json();
-}
-
-export async function getStreams() {
-  const response = await fetch(`${BACKEND_URL}/streams`);
-
-  if (!response.ok) {
-    throw new Error("Failed to load streams");
-  }
-
-  return response.json();
-}
+export const getMedia = () => request("/media");
+export const getTags = () => request("/tags");
+export const getStreams = () => request("/streams");
+export const sendMedia = (mediaData) =>
+  request("/media", { method: "POST", body: mediaData });
+export const mediaPreviewUrl = (mediaId) =>
+  `${API_BASE_URL}/media/${mediaId}/preview`;

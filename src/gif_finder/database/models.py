@@ -22,8 +22,17 @@ class Tag(SQLModel, table=True):
 class MediaTag(SQLModel, table=True):
     __table_args__ = (UniqueConstraint("media_id", "tag_id", name="uq_media_tag"),)
 
-    media_id: int = Field(foreign_key="media.id", primary_key=True)
-    tag_id: int = Field(foreign_key="tag.id", primary_key=True, index=True)
+    media_id: int = Field(
+        foreign_key="media.id",
+        primary_key=True,
+        ondelete="CASCADE",
+    )
+
+    tag_id: int = Field(
+        foreign_key="tag.id",
+        primary_key=True,
+        index=True,
+    )
 
 
 class Emote(SQLModel, table=True):

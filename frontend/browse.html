@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Browse - T10Nat GIF Finder</title>
+    <link rel="stylesheet" href="css/styles.css" />
+  </head>
+  <body>
+    <header class="site-header">
+      <div id="top-row">
+        <img src="assets/images/grey_rat.avif" alt="Rat picture" />
+        <h1>T10Nat GIF Finder</h1>
+        <img src="assets/images/yt_smile.jpg" alt="Nat picture" />
+      </div>
+      <nav id="button-row" aria-label="Main navigation">
+        <a class="nav-link" href="index.html">Home</a
+        ><a class="nav-link" href="browse.html" aria-current="page">Browse</a
+        ><a class="nav-link" href="upload.html">Upload</a>
+      </nav>
+    </header>
+    <main>
+      <section>
+        <div class="panel-heading">
+          <div>
+            <h2>Browse media</h2>
+            <p class="helper-text">
+              Filter the catalogue by any combination, then select a card for
+              its complete record.
+            </p>
+          </div>
+        </div>
+        <div class="filters">
+          <div class="form-field">
+            <label for="tag-filter">Tag</label
+            ><select id="tag-filter">
+              <option value="">All tags</option>
+            </select>
+          </div>
+          <div class="form-field">
+            <label for="author-filter">Author</label
+            ><select id="author-filter">
+              <option value="">All authors</option>
+            </select>
+          </div>
+          <div class="form-field">
+            <label for="stream-filter">Stream ID</label
+            ><select id="stream-filter">
+              <option value="">All streams</option>
+            </select>
+          </div>
+          <button id="clear-filters" class="secondary" type="button">
+            Clear filters
+          </button>
+        </div>
+      </section>
+      <p id="filter-summary" class="filter-summary" aria-live="polite"></p>
+      <div id="gif-grid" aria-live="polite"></div>
+    </main>
+    <dialog id="media-dialog" aria-labelledby="media-dialog-title">
+      <div class="dialog-header">
+        <h2 id="media-dialog-title">Media details</h2>
+        <button
+          id="close-dialog"
+          class="icon-button"
+          type="button"
+          aria-label="Close details"
+        >
+          ×
+        </button>
+      </div>
+      <dl id="media-details" class="media-details"></dl>
+    </dialog>
+    <script type="module" src="js/browse.js"></script>
+  </body>
+</html>

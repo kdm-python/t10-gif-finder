@@ -5,13 +5,13 @@ from __future__ import annotations
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 
+from gif_finder.api.uploads import UploadError
 from gif_finder.database.database import DatabaseUnavailableError
 from gif_finder.logger import logger
 from gif_finder.services.media_files.ffprobe import MediaProbeError
 from gif_finder.services.media_files.repository import MediaRepositoryError
 from gif_finder.services.media_files.service import MediaFilesServiceError
 from gif_finder.services.media_files.storage import MediaStorageError
-from gif_finder.api.uploads import UploadError
 
 
 def register_exception_handlers(app: FastAPI) -> None:
@@ -22,9 +22,7 @@ def register_exception_handlers(app: FastAPI) -> None:
         logger.error("Database unavailable: {}", exc)
         return JSONResponse(status_code=503, content={"detail": str(exc)})
 
-    @app.exception_handler(
-        MediaFilesServiceError
-    )
+    @app.exception_handler(MediaFilesServiceError)
     @app.exception_handler(MediaRepositoryError)
     @app.exception_handler(MediaStorageError)
     @app.exception_handler(MediaProbeError)
@@ -41,4 +39,6 @@ def register_exception_handlers(app: FastAPI) -> None:
     @app.exception_handler(Exception)
     async def unhandled_exception(_: Request, exc: Exception):
         logger.exception("Unhandled API exception")
-        return JSONResponse(status_code=500, content={"detail": "Internal server error."})
+        return JSONResponse(
+            status_code=500, content={"detail": "Internal server error."}
+        )
