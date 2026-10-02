@@ -12,11 +12,12 @@ from gif_finder.database.models import (  # noqa: F401
     MediaTag,
     Stream,
     Tag,
+    TwitchClip,
 )
 
 engine = create_engine(
     settings.active_database_url,
-    echo=False,
+    echo=True,
 )
 
 

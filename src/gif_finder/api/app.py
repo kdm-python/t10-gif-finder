@@ -10,7 +10,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 
 from gif_finder.api.errors import register_exception_handlers
-from gif_finder.api.routers import emotes, media, streams, tags
+from gif_finder.api.routers import emotes, media, streams, tags, twitch
 from gif_finder.config import settings
 from gif_finder.database.database import create_db_and_tables
 from gif_finder.logger import configure_api_logging, logger
@@ -45,6 +45,7 @@ app.include_router(tags.router)
 app.include_router(emotes.router)
 app.include_router(streams.router)
 app.include_router(media.router)
+app.include_router(twitch.router)
 register_exception_handlers(app)
 
 # Keep the small, dependency-free client alongside the API for local use.

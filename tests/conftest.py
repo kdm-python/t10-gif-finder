@@ -10,7 +10,7 @@ from sqlalchemy.engine import make_url
 from sqlalchemy.exc import OperationalError
 from sqlmodel import Session, create_engine
 
-from gif_finder.database.models import Emote, Media, MediaTag, Stream, Tag
+from gif_finder.database.models import Emote, Media, MediaTag, Stream, Tag, TwitchClip
 
 load_dotenv()
 
@@ -50,6 +50,7 @@ def _truncate_database(engine) -> None:
     table_names = [
         MediaTag.__table__.name,
         Media.__table__.name,
+        TwitchClip.__table__.name,
         Tag.__table__.name,
         Emote.__table__.name,
         Stream.__table__.name,
@@ -64,6 +65,7 @@ def _require_schema(engine) -> None:
     required_tables = [
         MediaTag.__table__.name,
         Media.__table__.name,
+        TwitchClip.__table__.name,
         Tag.__table__.name,
         Emote.__table__.name,
         Stream.__table__.name,

@@ -19,6 +19,10 @@ class Settings(BaseSettings):
     giffinder_media_root: str
     giffinder_test_database_url: str
     giffinder_test_media_root: str
+
+    twitch_client_id: str = ""
+    twitch_client_secret: str = ""
+
     log_level: str
     giffinder_cors_origins: str = "http://localhost:5173,http://localhost:3000"
 
@@ -58,6 +62,3 @@ class Settings(BaseSettings):
 
 
 settings = Settings()
-
-
-# settings = Settings()

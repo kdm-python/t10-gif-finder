@@ -107,6 +107,51 @@ class ErrorResponse(BaseModel):
     detail: str
 
 
+class TwitchClipRead(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    twitch_clip_id: str
+    broadcaster_id: str
+    broadcaster_name: str
+    creator_id: str | None
+    creator_name: str | None
+    video_id: str | None
+    game_id: str | None
+    vod_offset: int | None
+    title: str
+    language: str | None
+    duration: float
+    created_at: datetime
+    added_at: datetime
+    vod_url: str | None
+
+
+class TwitchClipCreate(BaseModel):
+    url: str = Field(min_length=1, max_length=2048)
+
+
+def twitch_clip_read(clip: "TwitchClip") -> TwitchClipRead:
+    """Build a Twitch clip response, including its derived VOD timestamp URL."""
+    from gif_finder.database.models import TwitchClip
+
+    if not isinstance(clip, TwitchClip) or clip.id is None:
+        raise ValueError("Cannot serialise an unpersisted Twitch clip.")
+
+    vod_url = None
+    if clip.video_id and clip.vod_offset is not None:
+        hours, remainder = divmod(clip.vod_offset, 3600)
+        minutes, seconds = divmod(remainder, 60)
+        vod_url = (
+            f"https://www.twitch.tv/videos/{clip.video_id}"
+            f"?t={hours}h{minutes}m{seconds}s"
+        )
+
+    return TwitchClipRead.model_validate(
+        {**clip.model_dump(), "vod_url": vod_url}
+    )
+
+
 def media_read(media: Media, tags: list[str]) -> MediaRead:
     """Build a browser-safe API response from a stored media model."""
     if media.id is None:  # pragma: no cover - persisted API rows always have IDs

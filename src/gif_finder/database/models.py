@@ -99,3 +99,34 @@ class Media(SQLModel, table=True):
     updated_at: datetime = Field(
         default_factory=lambda: datetime.now(UTC),
     )
+
+
+# -- Clips ---
+class TwitchClip(SQLModel, table=True):
+    id: int | None = Field(default=None, primary_key=True)
+
+    # Twitch identity
+    twitch_clip_id: str = Field(unique=True, index=True)
+
+    # People
+    broadcaster_id: str = Field(index=True)
+    broadcaster_name: str
+
+    creator_id: str | None = Field(default=None, index=True)
+    creator_name: str | None = None
+
+    # Source VOD/category
+    video_id: str | None = Field(default=None, index=True)
+    game_id: str | None = Field(default=None, index=True)
+    vod_offset: int | None = None
+
+    # Clip metadata
+    title: str
+    language: str | None = None
+    duration: float
+    created_at: datetime = Field(index=True)
+
+    # Your application metadata
+    added_at: datetime = Field(
+        default_factory=lambda: datetime.now(UTC),
+    )
